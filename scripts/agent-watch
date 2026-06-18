@@ -1,0 +1,265 @@
+#!/usr/bin/env python3
+import argparse
+import errno
+import fcntl
+import json
+import os
+import pty
+import re
+import select
+import shutil
+import signal
+import struct
+import sys
+import termios
+import time
+import tty
+import uuid
+from pathlib import Path
+
+
+PROMPT_PATTERNS = [
+    re.compile(pattern, re.IGNORECASE)
+    for pattern in [
+        r"do you want to",
+        r"press (enter|return)",
+        r"select (an )?option",
+        r"choose (an )?option",
+        r"continue\?",
+        r"\by/n\b",
+        r"\byes/no\b",
+        r"waiting for (input|confirmation)",
+        r"❯\s*$",
+    ]
+]
+
+
+def parse_args():
+    parser = argparse.ArgumentParser(
+        prog="agent-watch",
+        description="Run Codex or Claude through a PTY and publish state for Stream Dock.",
+    )
+    parser.add_argument("agent", choices=["codex", "claude"])
+    parser.add_argument("args", nargs=argparse.REMAINDER)
+    parser.add_argument("--quiet-seconds", type=float, default=8.0)
+    return parser.parse_args()
+
+
+def command_for(agent, extra_args):
+    binary = shutil.which(agent)
+    if not binary:
+        raise SystemExit(f"agent-watch: cannot find {agent} in PATH")
+    return [binary, *extra_args]
+
+
+def session_paths(session_id):
+    base = Path.home() / ".agent-watch" / "sessions"
+    base.mkdir(parents=True, exist_ok=True)
+    return base / f"{session_id}.json"
+
+
+def tty_name():
+    try:
+        return os.ttyname(sys.stdin.fileno()).replace("/dev/tty", "")
+    except OSError:
+        return ""
+
+
+def project_info(cwd):
+    path = Path(cwd)
+    return {
+        "cwd": cwd,
+        "project": path.name or cwd,
+        "parent": path.parent.name if path.parent else "",
+    }
+
+
+def strip_ansi(text):
+    return re.sub(r"\x1b\[[0-?]*[ -/]*[@-~]", "", text)
+
+
+def recent_tail(text, limit=4000):
+    if len(text) <= limit:
+        return text
+    return text[-limit:]
+
+
+def prompt_like(text):
+    cleaned = strip_ansi(text)
+    tail = cleaned[-1200:]
+    return any(pattern.search(tail) for pattern in PROMPT_PATTERNS)
+
+
+class StateWriter:
+    def __init__(self, path, session_id, agent, command, quiet_seconds):
+        self.path = path
+        self.session_id = session_id
+        self.agent = agent
+        self.command = command
+        self.quiet_seconds = quiet_seconds
+        self.started_at = time.time()
+        self.last_output_at = time.time()
+        self.recent = ""
+        self.state = "running"
+        self.exit_code = None
+        self.child_pid = None
+        self.last_write = 0
+
+    def set_child_pid(self, pid):
+        self.child_pid = pid
+
+    def observe_output(self, data):
+        now = time.time()
+        self.last_output_at = now
+        try:
+            chunk = data.decode("utf-8", errors="replace")
+        except Exception:
+            chunk = ""
+        self.recent = recent_tail(self.recent + chunk)
+        self.state = "waiting" if prompt_like(self.recent) else "running"
+
+    def refresh_state(self):
+        if self.exit_code is not None:
+            self.state = "done" if self.exit_code == 0 else "error"
+            return
+        if prompt_like(self.recent):
+            self.state = "waiting"
+            return
+        if time.time() - self.last_output_at >= self.quiet_seconds:
+            self.state = "waiting"
+        else:
+            self.state = "running"
+
+    def write(self, force=False):
+        now = time.time()
+        if not force and now - self.last_write < 0.5:
+            return
+        self.last_write = now
+        self.refresh_state()
+        info = project_info(os.getcwd())
+        payload = {
+            "schema": 1,
+            "sessionId": self.session_id,
+            "agent": self.agent,
+            "command": self.command,
+            "pid": self.child_pid,
+            "wrapperPid": os.getpid(),
+            "tty": tty_name(),
+            "state": self.state,
+            "startedAt": self.started_at,
+            "lastOutputAt": self.last_output_at,
+            "updatedAt": now,
+            "exitCode": self.exit_code,
+            "recentTail": strip_ansi(self.recent)[-1200:],
+            **info,
+        }
+        tmp = self.path.with_suffix(".tmp")
+        tmp.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+        tmp.replace(self.path)
+
+    def finish(self, exit_code):
+        self.exit_code = exit_code
+        self.write(force=True)
+
+
+def set_nonblocking(fd):
+    flags = fcntl.fcntl(fd, fcntl.F_GETFL)
+    fcntl.fcntl(fd, fcntl.F_SETFL, flags | os.O_NONBLOCK)
+
+
+def get_winsize():
+    try:
+        return fcntl.ioctl(sys.stdin.fileno(), termios.TIOCGWINSZ, b"\0" * 8)
+    except OSError:
+        return struct.pack("HHHH", 24, 80, 0, 0)
+
+
+def set_winsize(fd):
+    try:
+        fcntl.ioctl(fd, termios.TIOCSWINSZ, get_winsize())
+    except OSError:
+        pass
+
+
+def main():
+    args = parse_args()
+    cmd = command_for(args.agent, args.args)
+    session_id = f"{args.agent}-{uuid.uuid4().hex[:12]}"
+    state = StateWriter(session_paths(session_id), session_id, args.agent, cmd, args.quiet_seconds)
+
+    old_tty = None
+    master_fd = None
+
+    def resize_handler(_signum, _frame):
+        if master_fd is not None:
+            set_winsize(master_fd)
+
+    try:
+        pid, master_fd = pty.fork()
+        if pid == 0:
+            os.execvp(cmd[0], cmd)
+
+        state.set_child_pid(pid)
+        state.write(force=True)
+        set_winsize(master_fd)
+        signal.signal(signal.SIGWINCH, resize_handler)
+
+        old_tty = termios.tcgetattr(sys.stdin.fileno())
+        tty.setraw(sys.stdin.fileno())
+        set_nonblocking(sys.stdin.fileno())
+        set_nonblocking(master_fd)
+
+        exit_code = None
+        while True:
+            state.write()
+            try:
+                waited_pid, status = os.waitpid(pid, os.WNOHANG)
+                if waited_pid == pid:
+                    if os.WIFEXITED(status):
+                        exit_code = os.WEXITSTATUS(status)
+                    elif os.WIFSIGNALED(status):
+                        exit_code = 128 + os.WTERMSIG(status)
+                    else:
+                        exit_code = 1
+                    break
+            except ChildProcessError:
+                exit_code = 0
+                break
+
+            readable, _, _ = select.select([sys.stdin.fileno(), master_fd], [], [], 0.2)
+            if sys.stdin.fileno() in readable:
+                try:
+                    data = os.read(sys.stdin.fileno(), 4096)
+                    if data:
+                        os.write(master_fd, data)
+                except OSError as exc:
+                    if exc.errno not in (errno.EAGAIN, errno.EINTR):
+                        raise
+            if master_fd in readable:
+                try:
+                    data = os.read(master_fd, 4096)
+                    if data:
+                        os.write(sys.stdout.fileno(), data)
+                        state.observe_output(data)
+                    else:
+                        break
+                except OSError as exc:
+                    if exc.errno == errno.EIO:
+                        break
+                    if exc.errno not in (errno.EAGAIN, errno.EINTR):
+                        raise
+
+        state.finish(exit_code if exit_code is not None else 0)
+        return exit_code if exit_code is not None else 0
+    finally:
+        if old_tty is not None:
+            termios.tcsetattr(sys.stdin.fileno(), termios.TCSADRAIN, old_tty)
+        if master_fd is not None:
+            try:
+                os.close(master_fd)
+            except OSError:
+                pass
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
