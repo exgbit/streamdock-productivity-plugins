@@ -1,25 +1,32 @@
 # Chrome Tab Switcher
 
-Stream Dock prototype for monitoring Google Chrome tabs on macOS.
+用于在 Stream Dock 上显示 Google Chrome 标签页，并点击切换到对应标签页。
 
-## How It Works
+## 工作方式
 
-- Place `Chrome Tab Slot` on as many keys as you want.
-- The plugin polls Google Chrome every 1.5 seconds through AppleScript.
-- Slots are filled by Chrome window order, then tab order.
-- Press a slot to activate that Chrome window and tab.
-- It supports multiple pages through persistent slot indexes.
+- 在 Stream Dock 上放置多个 `Chrome Tab Slot`。
+- 插件每 1.5 秒通过 AppleScript 读取一次 Chrome 标签页。
+- 槽位按 Chrome 窗口顺序、标签页顺序排列。
+- 按键会保存持久槽位编号，因此支持多个 Stream Dock 页面。
+- 按下按键时，会激活对应的 Chrome 窗口和标签页。
 
-## Notes
+## 图标含义
 
-- Stream Dock plugins cannot create physical key placements by themselves. Pre-place enough slots for your expected tab count.
-- macOS may ask you to allow Stream Dock to control Google Chrome.
-- If Chrome has many tabs, use a dedicated Stream Dock page for this plugin.
-- If copied keys duplicate a stored slot index, the plugin repairs duplicate visible slots automatically.
+- 中间显示标签页标题。
+- 副标题显示域名或 URL 摘要。
+- 当前激活的标签页会显示 `ACTIVE`，并使用绿色强调。
+- 普通标签页显示 `TAB N`。
 
-## Debug
+## 当前限制
 
-Raw SDK events and errors are written to:
+- Stream Dock 插件不能自己创建物理按键，需要你提前放置足够多的 `Chrome Tab Slot`。
+- Chrome 的 AppleScript API 没有稳定的永久 tab ID；如果你关闭或移动标签页，后面的槽位会自然前移。
+- macOS 可能会提示允许 Stream Dock 控制 Google Chrome。
+- 如果复制已有按键导致槽位编号重复，插件会自动修复当前可见页面中的重复编号。
+
+## 调试
+
+日志位置：
 
 ```text
 chrome-tab-switcher.sdPlugin/plugin/log/events.ndjson

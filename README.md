@@ -1,14 +1,14 @@
-# Stream Dock Productivity Plugins
+# Stream Dock 效率插件合集
 
-macOS Stream Dock plugins for switching between AI agent terminals and Chrome tabs.
+这是一个面向 macOS Stream Dock 的插件合集，用于快速切换 AI Agent 终端和 Chrome 标签页。
 
-## Included
+## 包含内容
 
-- `agent-switcher.sdPlugin`: monitors Codex and Claude Code terminal sessions, shows project names and RUN/WAIT state, and switches to the matching terminal.
-- `chrome-tab-switcher.sdPlugin`: monitors Google Chrome tabs and switches to the selected tab.
-- `scripts/agent-watch`: optional wrapper for launching Codex/Claude with more reliable RUN/WAIT/DONE/ERR state reporting.
+- `agent-switcher.sdPlugin`：监控 Codex / Claude Code 终端会话，显示项目名、运行状态，并点击切回对应终端。
+- `chrome-tab-switcher.sdPlugin`：监控 Google Chrome 标签页，并点击切换到对应标签页。
+- `scripts/agent-watch`：可选启动包装器，用于更可靠地记录 Codex / Claude 的 `RUN / WAIT / DONE / ERR` 状态。
 
-## Install
+## 安装
 
 ```bash
 rsync -av agent-switcher.sdPlugin "$HOME/Library/Application Support/HotSpot/StreamDock/plugins/"
@@ -17,42 +17,42 @@ mkdir -p "$HOME/.local/bin"
 rsync -av scripts/agent-watch "$HOME/.local/bin/agent-watch"
 ```
 
-Restart Stream Dock after installing or updating.
+安装或更新后，请重启 Stream Dock。
 
 ## Agent Switcher
 
-Place multiple `Agent Slot` actions on Stream Dock keys. Each key stores a persistent slot index, so you can place more slots across multiple pages.
+在 Stream Dock 上放置多个 `Agent Slot` 按键。每个按键会保存一个固定的槽位编号，因此可以跨多个页面放更多按键。
 
-The icon is split into two visual areas:
+图标分为两个区域：
 
-- upper area: agent type color, Codex blue or Claude amber
-- bottom strip: state color, RUN green, WAIT yellow, DONE gray, ERR red
+- 上半部分：Agent 类型颜色，Codex 为蓝色，Claude 为亚麻/橙色。
+- 下方状态条：运行状态颜色，`RUN` 为绿色，`WAIT` 为黄色，`DONE` 为灰色，`ERR` 为红色。
 
-The primary text is the project directory name. Pressing a key switches to the matching Terminal/iTerm session when possible.
+图标中间主要显示项目目录名。按下按键时，会尽量切换到对应的 Terminal / iTerm 会话。
 
-For more reliable state detection, start new sessions through the wrapper:
+如果希望状态识别更可靠，建议通过 wrapper 启动新的会话：
 
 ```bash
 agent-watch claude
 agent-watch codex resume
 ```
 
-The wrapper writes state files under:
+wrapper 会把状态写入：
 
 ```text
 ~/.agent-watch/sessions/
 ```
 
-Agent Switcher reads those files when available.
+Agent Switcher 会优先读取这些状态文件。
 
 ## Chrome Tab Switcher
 
-Place multiple `Chrome Tab Slot` actions on Stream Dock keys. The plugin polls Chrome through AppleScript and maps slots to Chrome tabs by window order, then tab order.
+在 Stream Dock 上放置多个 `Chrome Tab Slot` 按键。插件会通过 AppleScript 定时读取 Chrome 的窗口和标签页。
 
-Pressing a key activates the matching Chrome window and tab.
+按键会显示标签页标题和域名。按下按键时，会激活对应的 Chrome 窗口和标签页。
 
-## Notes
+## 注意事项
 
-- Stream Dock plugins cannot create physical key placements by themselves. Place enough slot actions on one or more pages.
-- If a copied key duplicates a stored slot index, the plugins repair duplicate visible slots automatically.
-- macOS may prompt for Automation permissions to control Terminal, iTerm2, or Google Chrome.
+- Stream Dock 插件不能自己创建物理按键位置。你需要先在一个或多个页面上放置足够的 slot action。
+- 如果复制已有按键，Stream Dock 可能会复制它保存的槽位编号。插件会自动修复当前可见页面中的重复槽位。
+- macOS 可能会提示授予 Automation 权限，用于控制 Terminal、iTerm2 或 Google Chrome。

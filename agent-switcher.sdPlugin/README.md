@@ -1,55 +1,63 @@
 # Agent Switcher
 
-Stream Dock prototype for monitoring running Codex and Claude Code terminal sessions on macOS.
+用于监控 macOS 上正在运行的 Codex 和 Claude Code 终端会话，并在 Stream Dock 按键上显示项目、状态和切换入口。
 
-## How It Works
+## 工作方式
 
-- Place `Agent Slot` on as many keys as you want.
-- The plugin polls `ps` every 2 seconds.
-- It deduplicates sessions by agent type and TTY.
-- Slots are filled from left to right, top to bottom.
-- Press a slot to switch to the matching Terminal or iTerm2 tab.
-- It supports multiple pages through persistent slot indexes.
-- It reads `~/.agent-watch/sessions/*.json` when available for more reliable RUN/WAIT/DONE/ERR state.
+- 在 Stream Dock 上放置多个 `Agent Slot`。
+- 插件每 2 秒扫描一次进程。
+- 按 TTY 去重，一个终端只显示一个会话。
+- 按键会保存持久槽位编号，因此支持多个 Stream Dock 页面。
+- 按下按键时，插件会尝试切换到对应的 Terminal 或 iTerm2 标签页。
+- 如果存在 `~/.agent-watch/sessions/*.json` 状态文件，插件会优先读取它们来判断 `RUN / WAIT / DONE / ERR`。
 
-## Current Limits
+## 图标含义
 
-- Stream Dock plugins cannot create physical key placements by themselves. You pre-place several `Agent Slot` actions, then the plugin changes their labels/images.
-- Exact switching is implemented for Terminal and iTerm2 by matching the tab/session TTY.
-- Warp, Cursor integrated terminals, and other terminal apps may be detected, but exact tab switching is not reliable unless they expose an AppleScript or URL API for selecting a TTY/session.
-- If copied keys duplicate a stored slot index, the plugin repairs duplicate visible slots automatically.
+- 上半部分颜色表示 Agent 类型：
+  - Codex：蓝色
+  - Claude：亚麻/橙色
+- 下方状态条表示状态：
+  - `RUN`：绿色，正在运行或仍有活动
+  - `WAIT`：黄色，正在等待你输入、选择或按回车
+  - `DONE`：灰色，任务已结束
+  - `ERR`：红色，任务异常退出
 
-## Optional Wrapper
+图标中间显示项目目录名，副标题显示父目录和 TTY。
 
-Install:
+## 可选 Wrapper
+
+`agent-watch` 可以更可靠地识别 Agent 状态。它会通过伪终端启动 Codex / Claude，并写入结构化状态文件。
+
+安装：
 
 ```bash
 mkdir -p "$HOME/.local/bin"
 rsync -av scripts/agent-watch "$HOME/.local/bin/agent-watch"
 ```
 
-Start new sessions:
+启动新会话：
 
 ```bash
 agent-watch claude
 agent-watch codex resume
 ```
 
-The wrapper publishes state under `~/.agent-watch/sessions/`.
+状态文件位置：
 
-## Install
-
-```bash
-cd agent-switcher.sdPlugin/plugin
-npm install
-rsync -av ../ "$HOME/Library/Application Support/HotSpot/StreamDock/plugins/agent-switcher.sdPlugin/"
+```text
+~/.agent-watch/sessions/
 ```
 
-Restart Stream Dock after installation.
+## 当前限制
 
-## Debug
+- Stream Dock 插件不能自己创建物理按键，需要你提前放置多个 `Agent Slot`。
+- Terminal 和 iTerm2 可以按 TTY 尝试精确切换。
+- Warp、Cursor 内置终端等不一定支持精确切换，除非它们提供可按会话选择的自动化 API。
+- 如果复制已有按键导致槽位编号重复，插件会自动修复当前可见页面中的重复编号。
 
-Raw SDK events and scan errors are written to:
+## 调试
+
+日志位置：
 
 ```text
 agent-switcher.sdPlugin/plugin/log/events.ndjson
