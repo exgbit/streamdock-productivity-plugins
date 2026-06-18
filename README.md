@@ -23,6 +23,8 @@ rsync -av scripts/agent-watch "$HOME/.local/bin/agent-watch"
 
 在 Stream Dock 上放置多个 `Agent Slot` 按键。每个按键会保存一个固定的槽位编号，因此可以跨多个页面放更多按键。
 
+![Agent Switcher 终端监测效果](docs/images/agent-switcher-device.png)
+
 图标分为两个区域：
 
 - 上半部分：Agent 类型颜色，Codex 为蓝色，Claude 为亚麻/橙色。
@@ -48,6 +50,8 @@ Agent Switcher 会优先读取这些状态文件。
 ## Chrome Tab Switcher
 
 在 Stream Dock 上放置多个 `Chrome Tab Slot` 按键。插件会通过 AppleScript 定时读取 Chrome 的窗口和标签页。
+
+![Chrome Tab Switcher 标签页监测效果](docs/images/chrome-tab-switcher-device.png)
 
 按键会显示标签页标题和域名。按下按键时，会激活对应的 Chrome 窗口和标签页。
 

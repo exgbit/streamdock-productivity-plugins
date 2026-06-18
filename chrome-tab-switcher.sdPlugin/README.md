@@ -2,6 +2,8 @@
 
 用于在 Stream Dock 上显示 Google Chrome 标签页，并点击切换到对应标签页。
 
+![Chrome Tab Switcher 标签页监测效果](../docs/images/chrome-tab-switcher-device.png)
+
 ## 工作方式
 
 - 在 Stream Dock 上放置多个 `Chrome Tab Slot`。

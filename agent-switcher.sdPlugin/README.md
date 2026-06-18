@@ -2,6 +2,8 @@
 
 用于监控 macOS 上正在运行的 Codex 和 Claude Code 终端会话，并在 Stream Dock 按键上显示项目、状态和切换入口。
 
+![Agent Switcher 终端监测效果](../docs/images/agent-switcher-device.png)
+
 ## 工作方式
 
 - 在 Stream Dock 上放置多个 `Agent Slot`。
