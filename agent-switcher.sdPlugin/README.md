@@ -6,7 +6,7 @@
 
 ## 工作方式
 
-- 在 Stream Dock 上放置多个 `Agent Slot`。
+- 在 Stream Dock 上放置多个「AI 终端槽位」。
 - 插件每 2 秒扫描一次进程。
 - 按 TTY 去重，一个终端只显示一个会话。
 - 按键会保存持久槽位编号，因此支持多个 Stream Dock 页面。
@@ -52,7 +52,7 @@ agent-watch codex resume
 
 ## 当前限制
 
-- Stream Dock 插件不能自己创建物理按键，需要你提前放置多个 `Agent Slot`。
+- Stream Dock 插件不能自己创建物理按键，需要你提前放置多个「AI 终端槽位」。
 - Terminal 和 iTerm2 可以按 TTY 尝试精确切换。
 - Warp、Cursor 内置终端等不一定支持精确切换，除非它们提供可按会话选择的自动化 API。
 - 如果复制已有按键导致槽位编号重复，插件会自动修复当前可见页面中的重复编号。

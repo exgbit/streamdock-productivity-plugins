@@ -6,7 +6,7 @@
 
 ## 工作方式
 
-- 在 Stream Dock 上放置多个 `Chrome Tab Slot`。
+- 在 Stream Dock 上放置多个「Chrome 标签槽位」。
 - 插件每 1.5 秒通过 AppleScript 读取一次 Chrome 标签页。
 - 槽位按 Chrome 窗口顺序、标签页顺序排列。
 - 按键会保存持久槽位编号，因此支持多个 Stream Dock 页面。
@@ -21,7 +21,7 @@
 
 ## 当前限制
 
-- Stream Dock 插件不能自己创建物理按键，需要你提前放置足够多的 `Chrome Tab Slot`。
+- Stream Dock 插件不能自己创建物理按键，需要你提前放置足够多的「Chrome 标签槽位」。
 - Chrome 的 AppleScript API 没有稳定的永久 tab ID；如果你关闭或移动标签页，后面的槽位会自然前移。
 - macOS 可能会提示允许 Stream Dock 控制 Google Chrome。
 - 如果复制已有按键导致槽位编号重复，插件会自动修复当前可见页面中的重复编号。

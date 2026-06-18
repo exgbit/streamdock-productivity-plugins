@@ -2,7 +2,7 @@
   "Actions": [
     {
       "Icon": "static/icon.svg",
-      "Name": "Chrome Tab Slot",
+      "Name": "Chrome 标签槽位",
       "DisableAutomaticStates": true,
       "States": [
         {
@@ -18,17 +18,17 @@
       ],
       "UserTitleEnabled": true,
       "SupportedInMultiActions": false,
-      "Tooltip": "Shows one Chrome tab. Press to switch to it.",
+      "Tooltip": "显示一个 Chrome 标签页，按下即可切换过去。",
       "UUID": "vip.key123.chrome-tab-switcher.slot"
     }
   ],
   "SDKVersion": 1,
   "Author": "justin",
-  "Name": "Chrome Tab Switcher",
+  "Name": "Chrome 标签切换器",
   "Icon": "static/icon.svg",
   "CodePathMac": "plugin/index.js",
-  "Description": "Monitor Google Chrome tabs and switch between them from Stream Dock.",
-  "Category": "Browser",
+  "Description": "实时监控 Google Chrome 标签页，并通过 Stream Dock 一键切换。",
+  "Category": "效率工具",
   "CategoryIcon": "static/icon.svg",
   "Version": "0.1.0",
   "URL": "https://github.com/MiraboxSpace/StreamDock-Plugin-SDK",

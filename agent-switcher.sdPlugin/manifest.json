@@ -2,12 +2,12 @@
   "Actions": [
     {
       "Icon": "static/icon.svg",
-      "Name": "Agent Slot",
+      "Name": "AI 终端槽位",
       "DisableAutomaticStates": true,
       "States": [
         {
           "Image": "static/icon.svg",
-          "Title": "Agent",
+          "Title": "AI",
           "TitleAlignment": "bottom",
           "FontSize": "10"
         }
@@ -18,17 +18,17 @@
       ],
       "UserTitleEnabled": true,
       "SupportedInMultiActions": false,
-      "Tooltip": "Shows one running Codex or Claude Code terminal. Press to switch to it.",
+      "Tooltip": "显示一个正在运行的 Codex 或 Claude Code 终端，按下即可切换过去。",
       "UUID": "vip.key123.agent-switcher.slot"
     }
   ],
   "SDKVersion": 1,
   "Author": "justin",
-  "Name": "Agent Switcher",
+  "Name": "AI 终端切换器",
   "Icon": "static/icon.svg",
   "CodePathMac": "plugin/index.js",
-  "Description": "Monitor running Codex and Claude Code terminals and switch between them.",
-  "Category": "Agents",
+  "Description": "实时监控 Codex 和 Claude Code 终端会话，显示项目与状态，并一键切换。",
+  "Category": "效率工具",
   "CategoryIcon": "static/icon.svg",
   "Version": "0.1.0",
   "URL": "https://github.com/MiraboxSpace/StreamDock-Plugin-SDK",
